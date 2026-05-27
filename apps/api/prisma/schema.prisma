@@ -1,0 +1,104 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum InvitationStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+enum InvitationResponseType {
+  YES
+  MAYBE
+  NO
+}
+
+enum NotificationChannel {
+  EMAIL
+  PUSH
+  REALTIME
+}
+
+enum NotificationStatus {
+  PENDING
+  SENT
+  FAILED
+}
+
+model User {
+  id            String         @id @default(cuid())
+  email         String         @unique
+  displayName   String
+  avatarUrl     String?
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  invitations   Invitation[]
+  notifications Notification[]
+
+  @@index([createdAt])
+}
+
+model Theme {
+  id            String       @id @default(cuid())
+  name          String       @unique
+  description   String?
+  gradientFrom  String
+  gradientTo    String
+  animationKey  String
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+  invitations   Invitation[]
+}
+
+model Invitation {
+  id          String              @id @default(cuid())
+  uniqueSlug  String              @unique
+  senderId    String
+  sender      User                @relation(fields: [senderId], references: [id], onDelete: Cascade)
+  recipientName String
+  message     String
+  place       String
+  scheduledAt DateTime
+  themeId     String?
+  theme       Theme?              @relation(fields: [themeId], references: [id], onDelete: SetNull)
+  status      InvitationStatus    @default(PUBLISHED)
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
+  response    InvitationResponse?
+
+  @@index([senderId, createdAt(sort: Desc)])
+  @@index([scheduledAt])
+  @@index([status])
+}
+
+model InvitationResponse {
+  id           String                 @id @default(cuid())
+  invitationId String                 @unique
+  invitation   Invitation             @relation(fields: [invitationId], references: [id], onDelete: Cascade)
+  response     InvitationResponseType
+  note         String?
+  createdAt    DateTime               @default(now())
+  updatedAt    DateTime               @updatedAt
+
+  @@index([response, createdAt])
+}
+
+model Notification {
+  id            String             @id @default(cuid())
+  userId        String
+  user          User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  invitationId  String?
+  channel       NotificationChannel
+  status        NotificationStatus @default(PENDING)
+  payload       Json
+  createdAt     DateTime           @default(now())
+  sentAt        DateTime?
+
+  @@index([userId, status, createdAt(sort: Desc)])
+}
