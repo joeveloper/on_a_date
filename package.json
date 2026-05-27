@@ -1,0 +1,16 @@
+{
+  "name": "crushly-monorepo",
+  "private": true,
+  "version": "0.1.0",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev:web": "npm --workspace web run dev",
+    "dev:api": "npm --workspace api run start:dev",
+    "build": "npm --workspace api run build && npm --workspace web run build",
+    "test": "npm --workspace api run test",
+    "lint": "npm --workspace api run lint && npm --workspace web run lint"
+  }
+}
